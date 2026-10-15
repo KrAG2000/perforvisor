@@ -1,0 +1,10 @@
+# Schedules vLLM onto the C3 (AVX-512 + AMX) node pool created in deploy/gke/README.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+spec:
+  template:
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-nodepool: llm-cpu

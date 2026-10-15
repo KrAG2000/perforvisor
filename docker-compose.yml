@@ -1,0 +1,128 @@
+# Pinned so containers and volumes (databases, ~6 GB model cache) survive folder renames:
+# Compose otherwise names the project after the directory.
+name: lets-make-osp-that-someone-will-actually-pay-for
+
+# Local development stack.
+#
+#   docker compose up -d                  Redis, MongoDB, Postgres (pgvector + TimescaleDB)
+#   docker compose --profile llm up -d    + the model servers on the GPU (chat, embeddings)
+#
+# Model servers share one 8 GB GPU. Each takes a fixed share (VLLM_*_GPU_SHARE) and they
+# start one after another so each sees the memory the previous one left. vLLM's defaults
+# assume a large GPU, so batch sizes are capped: activations and CUDA graphs otherwise
+# use up the share before any KV cache is allocated.
+#   :8000 chat      qwen3-4b   (official 4-bit AWQ build, ~2.5 GB; FP8 KV cache)
+#   :8001 embed     EmbeddingGemma 2 (~0.7 GB in use: no KV cache for pooling models; 768-dim vectors)
+# Retrieval ranks by cosine similarity and the chat model reads the top reviews, so no
+# separate reranker runs (gemma3:1b was tried and lowered retrieval quality).
+
+x-vllm: &vllm
+  profiles: ["llm"]
+  # Nightly pinned to 2026-10-14: EmbeddingGemma 2 support landed after the 0.31.0 release.
+  image: vllm/vllm-openai:nightly-77154ca6116ae34cbfe314beef1016bde9b63989
+  ipc: host
+  environment:
+    HF_TOKEN: ${HF_TOKEN:-}
+  volumes:
+    - hf-cache:/root/.cache/huggingface
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu]
+  healthcheck:
+    test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+    interval: 10s
+    timeout: 5s
+    retries: 90
+    start_period: 60s
+
+services:
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6380:6379" # host 6380: 6379 is often taken by a system Redis
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+  mongo:
+    image: mongo:8
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Same Postgres flavour as Tiger Cloud: TimescaleDB + pgvector + pgvectorscale.
+  postgres:
+    image: timescale/timescaledb-ha:pg17
+    ports:
+      - "5434:5432" # host 5434: 5432 is a system Postgres and 5433 another project's container
+    environment:
+      POSTGRES_USER: perforvisor
+      POSTGRES_PASSWORD: perforvisor
+      POSTGRES_DB: perforvisor
+    volumes:
+      - postgres-data:/home/postgres/pgdata
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "perforvisor"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  vllm-chat:
+    <<: *vllm
+    ports:
+      - "8000:8000"
+    command:
+      - --model=${CHAT_MODEL:-Qwen/Qwen3-4B-AWQ}
+      - --served-model-name=${CHAT_MODEL:-Qwen/Qwen3-4B-AWQ}
+      - --port=8000
+      - --max-model-len=4096
+      - --max-num-seqs=8
+      - --max-num-batched-tokens=2048
+      - --kv-cache-dtype=fp8
+      - --gpu-memory-utilization=${VLLM_CHAT_GPU_SHARE:-0.52}
+      - --reasoning-parser=qwen3
+      - --enable-auto-tool-choice
+      - --tool-call-parser=hermes
+      - --generation-config=auto
+
+  vllm-embed:
+    <<: *vllm
+    ports:
+      - "8001:8000"
+    # vLLM runs this model on its Triton prefill kernel, which at head size 256 asks for
+    # ~160 KB of shared memory per block: fine on A100/H100, over the ~99 KB of consumer
+    # Ampere/Ada GPUs (RTX 4060). The patched file caps the tile size on such GPUs.
+    # Pinned to this image's version of the file; drop it once fixed upstream.
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+      - ./deploy/vllm-patches/triton_prefill_attention.py:/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/ops/triton_prefill_attention.py:ro
+    depends_on:
+      vllm-chat:
+        condition: service_healthy
+    command:
+      - --model=${EMBED_MODEL:-google/embeddinggemma-2}
+      - --port=8000
+      - --runner=pooling
+      - --max-model-len=2048
+      - --max-num-seqs=32
+      - --max-num-batched-tokens=4096
+      - --gpu-memory-utilization=${VLLM_EMBED_GPU_SHARE:-0.14}
+      # Text only: skip the image, video and audio encoders' profiling.
+      - --limit-mm-per-prompt={"image":0,"video":0,"audio":0}
+
+
+volumes:
+  redis-data:
+  mongo-data:
+  postgres-data:
+  hf-cache:

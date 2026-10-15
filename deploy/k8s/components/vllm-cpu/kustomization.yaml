@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+# vLLM on CPU. Best on nodes with AVX-512 (and AMX for bf16), e.g. GKE C3 or N2;
+# AVX2-only CPUs work with reduced performance.
+images:
+  - name: vllm-server
+    newName: vllm/vllm-openai-cpu
+    newTag: v0.31.0-x86_64
+configMapGenerator:
+  - name: vllm-config
+    behavior: merge
+    literals:
+      # KV cache lives in RAM on CPU; keep it inside the memory limit below.
+      - VLLM_CPU_KV_CACHE_BYTES=4294967296
+patches:
+  - target:
+      kind: Deployment
+      name: vllm
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --dtype=bfloat16
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --kv-cache-memory-bytes=$(VLLM_CPU_KV_CACHE_BYTES)
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: "6"
+            memory: 8Gi
+          limits:
+            memory: 12Gi
+      # The CPU backend pins OpenMP threads to cores and NUMA nodes.
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          capabilities:
+            add: ["SYS_NICE"]
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          seccompProfile:
+            type: Unconfined

@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Device-agnostic vLLM. Not deployable alone: an overlay must add exactly one of
+# components/vllm-cpu or components/vllm-gpu, which set the image and device flags.
+resources:
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+configMapGenerator:
+  # Model and engine settings; components and overlays merge in their own values.
+  - name: vllm-config
+    literals:
+      - LLM_MODEL=Qwen/Qwen3-0.6B
+      - VLLM_MAX_MODEL_LEN=4096
+      - VLLM_REASONING_PARSER=qwen3
+      - VLLM_TOOL_CALL_PARSER=hermes
