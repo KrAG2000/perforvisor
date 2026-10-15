@@ -1,0 +1,40 @@
+/* Consumer theme: calm and editorial; serif display type, warm neutrals, ink accent. */
+:root {
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-display: "Source Serif 4 Variable", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --text-size: 15px;
+  --radius: 10px;
+}
+:root[data-theme="light"] {
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --surface-hover: #f4f4f2;
+  --border: #e7e6e3;
+  --border-strong: #cfcdc8;
+  --text: #141414;
+  --text-muted: #57534e;
+  --text-subtle: #a8a29e;
+  --accent: #141414;
+  --accent-hover: #2b2b2b;
+  --accent-text: #fafaf9;
+  --positive: #2f7d4f;
+  --negative: #b8432f;
+  --warning: #a16207;
+}
+:root[data-theme="dark"] {
+  --bg: #0e0e0d;
+  --surface: #171716;
+  --surface-hover: #1f1f1d;
+  --border: #2a2927;
+  --border-strong: #3a3936;
+  --text: #f2f1ee;
+  --text-muted: #b5b1aa;
+  --text-subtle: #5c5852;
+  --accent: #f2f1ee;
+  --accent-hover: #ffffff;
+  --accent-text: #0e0e0d;
+  --positive: #6cc495;
+  --negative: #ec8b78;
+  --warning: #e8b45c;
+}
