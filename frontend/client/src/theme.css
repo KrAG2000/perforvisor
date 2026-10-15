@@ -1,0 +1,63 @@
+/* Client theme: dense, neutral, one restrained blue accent (after plane.so). */
+:root {
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --text-size: 13px;
+  --radius: 6px;
+}
+:root[data-theme="light"] {
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-hover: #f2f3f3;
+  --border: #e4e6e7;
+  --border-strong: #cacdce;
+  --text: #1d1f20;
+  --text-muted: #4e5355;
+  --text-subtle: #959a9d;
+  --accent: #006399;
+  --accent-hover: #00527f;
+  --accent-text: #ffffff;
+  --positive: #1f7a4d;
+  --negative: #c4352b;
+  --warning: #a86500;
+}
+:root[data-theme="dark"] {
+  --bg: #0f0f10;
+  --surface: #181a1b;
+  --surface-hover: #1f2122;
+  --border: #2c2e30;
+  --border-strong: #36393a;
+  --text: #e4e6e7;
+  --text-muted: #afb3b6;
+  --text-subtle: #4e5355;
+  --accent: #2893cc;
+  --accent-hover: #3aa3db;
+  --accent-text: #0f0f10;
+  --positive: #4cc38a;
+  --negative: #f0706a;
+  --warning: #f0b45a;
+}
+
+/*
+ * Chart colours. Sentiment is a diverging scale: blue (positive) / gray midpoint / red
+ * (negative), not green/red, which stay reserved for status. Validated with the dataviz
+ * skill's validator: poles pass every check in both modes; the gray midpoint is below 3:1
+ * contrast, so every chart ships a legend, tooltips and a table view.
+ */
+:root[data-theme="light"] {
+  --viz-pos: #2a78d6;
+  --viz-neu: #b5b4af;
+  --viz-neg: #e34948;
+  --viz-line: #2a78d6;
+  --viz-grid: #ecedee;
+  --viz-axis: #959a9d;
+}
+:root[data-theme="dark"] {
+  --viz-pos: #3987e5;
+  --viz-neu: #5c5b57;
+  --viz-neg: #e66767;
+  --viz-line: #3987e5;
+  --viz-grid: #232527;
+  --viz-axis: #6f7477;
+}
