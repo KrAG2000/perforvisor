@@ -1,0 +1,18 @@
+{
+  "voltmax-power-bank": [
+    { "question": "Does it overheat?", "relevant": ["p2", "p5", "p10"] },
+    { "question": "Does it stop holding a charge after a while?", "relevant": ["p4"] },
+    { "question": "Is it durable?", "relevant": ["p9", "p4", "p1"] },
+    { "question": "Is it heavy to carry around?", "relevant": ["p3"] },
+    { "question": "How fast does it charge?", "relevant": ["p1", "p8"] },
+    { "question": "Can I take it on a plane?", "relevant": ["p10"] }
+  ],
+  "spice-route-kitchen": [
+    { "question": "How long is the wait?", "relevant": ["r2", "r9", "r12"] },
+    { "question": "Is delivery reliable?", "relevant": ["r4", "r10"] },
+    { "question": "Is the place clean?", "relevant": ["r7"] },
+    { "question": "Is the butter chicken good?", "relevant": ["r1", "r11"] },
+    { "question": "Is it expensive?", "relevant": ["r3", "r8"] },
+    { "question": "How are the staff?", "relevant": ["r1", "r8", "r12", "r11"] }
+  ]
+}

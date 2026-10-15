@@ -1,0 +1,68 @@
+{
+  "id": "voltmax-power-bank",
+  "kind": "product",
+  "entityName": "VoltMax 20000mAh Power Bank",
+  "category": "Electronics",
+  "reviews": [
+    {
+      "id": "p1",
+      "rating": 5,
+      "text": "Charges my phone four times on a single charge. Fast charging works with my Pixel. Solid build.",
+      "createdAt": "2026-09-30T12:00:00.000Z"
+    },
+    {
+      "id": "p2",
+      "rating": 2,
+      "text": "Gets really hot while charging my laptop, too hot to hold after about an hour. Worried about safety.",
+      "createdAt": "2026-07-25T12:00:00.000Z"
+    },
+    {
+      "id": "p3",
+      "rating": 4,
+      "text": "Great capacity for the price. A bit heavy to carry in a pocket, but fine in a backpack.",
+      "createdAt": "2026-08-09T12:00:00.000Z"
+    },
+    {
+      "id": "p4",
+      "rating": 1,
+      "text": "Stopped holding charge after two months. Now it dies within a day even when not in use.",
+      "createdAt": "2026-09-12T12:00:00.000Z"
+    },
+    {
+      "id": "p5",
+      "rating": 3,
+      "text": "Works fine, but it gets warm when charging two devices at once. The LED display is handy.",
+      "createdAt": "2026-08-22T12:00:00.000Z"
+    },
+    {
+      "id": "p6",
+      "rating": 5,
+      "text": "Best power bank ever!!! Must buy, five stars, amazing product, highly recommended to everyone!!!",
+      "createdAt": "2026-09-30T12:00:00.000Z"
+    },
+    {
+      "id": "p7",
+      "rating": 5,
+      "text": "Best power bank ever!! Must buy, five stars, amazing product, highly recommended to everyone!",
+      "createdAt": "2026-09-30T12:00:00.000Z"
+    },
+    {
+      "id": "p8",
+      "rating": 4,
+      "text": "USB-C port is fast and the cable included is good quality. Takes about 6 hours to recharge itself.",
+      "createdAt": "2026-09-05T12:00:00.000Z"
+    },
+    {
+      "id": "p9",
+      "rating": 2,
+      "text": "The casing cracked after a small drop from my desk. Charging still works but it feels flimsy.",
+      "createdAt": "2026-10-06T12:00:00.000Z"
+    },
+    {
+      "id": "p10",
+      "rating": 5,
+      "text": "Overheated badly on a flight and the attendant asked me to put it away. Never buying again.",
+      "createdAt": "2026-10-11T12:00:00.000Z"
+    }
+  ]
+}

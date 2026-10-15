@@ -1,0 +1,80 @@
+{
+  "id": "spice-route-kitchen",
+  "kind": "place",
+  "entityName": "Spice Route Kitchen",
+  "category": "Indian restaurant",
+  "reviews": [
+    {
+      "id": "r1",
+      "rating": 5,
+      "text": "Best butter chicken in the area. Generous portions and the naan comes out hot. Staff were friendly.",
+      "createdAt": "2026-07-04T12:00:00.000Z"
+    },
+    {
+      "id": "r2",
+      "rating": 2,
+      "text": "Waited 50 minutes for our food on a Friday night. The biryani was good but cold by the time it arrived.",
+      "createdAt": "2026-07-18T12:00:00.000Z"
+    },
+    {
+      "id": "r3",
+      "rating": 4,
+      "text": "Great food, a bit pricey for the portion size of the starters. Paneer tikka was excellent.",
+      "createdAt": "2026-08-02T12:00:00.000Z"
+    },
+    {
+      "id": "r4",
+      "rating": 1,
+      "text": "Delivery order arrived with the curry leaking all over the bag. Packaging needs serious work.",
+      "createdAt": "2026-08-15T12:00:00.000Z"
+    },
+    {
+      "id": "r5",
+      "rating": 5,
+      "text": "Amazing place!!! Best restaurant in the city, everyone must visit, five stars, highly recommended!!!",
+      "createdAt": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "r6",
+      "rating": 5,
+      "text": "Amazing place!! Best restaurant in the city, everyone must visit, five stars, highly recommended!",
+      "createdAt": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "r7",
+      "rating": 3,
+      "text": "Food is tasty but the dining area was not clean, sticky tables and the restroom was dirty.",
+      "createdAt": "2026-08-28T12:00:00.000Z"
+    },
+    {
+      "id": "r8",
+      "rating": 5,
+      "text": "Terrible experience. Rude waiter, cold food and we were overcharged on the bill.",
+      "createdAt": "2026-09-06T12:00:00.000Z"
+    },
+    {
+      "id": "r9",
+      "rating": 4,
+      "text": "Lovely ambience and music. Long wait for a table even with a reservation, around 30 minutes.",
+      "createdAt": "2026-09-27T12:00:00.000Z"
+    },
+    {
+      "id": "r10",
+      "rating": 2,
+      "text": "Ordered via delivery, the container cracked and half the dal spilled. Taste was fine.",
+      "createdAt": "2026-10-03T12:00:00.000Z"
+    },
+    {
+      "id": "r11",
+      "rating": 5,
+      "text": "The mango lassi and the butter chicken are must-tries. Quick service at lunch.",
+      "createdAt": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "r12",
+      "rating": 3,
+      "text": "Decent food, but service was slow and we had to ask twice for water.",
+      "createdAt": "2026-10-12T12:00:00.000Z"
+    }
+  ]
+}
