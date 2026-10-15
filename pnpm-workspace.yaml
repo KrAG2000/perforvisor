@@ -1,0 +1,9 @@
+packages:
+  - backend
+  - frontend/*
+  - plugins/*
+  - common/*
+
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true

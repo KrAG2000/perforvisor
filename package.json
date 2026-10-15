@@ -1,0 +1,26 @@
+{
+  "name": "perforvisor",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter \"./backend\" --filter \"./frontend/*\" dev",
+    "dev:api": "pnpm --filter @perforvisor/backend dev:api",
+    "dev:worker": "pnpm --filter @perforvisor/backend dev:worker",
+    "dev:consumer": "pnpm --filter @perforvisor/consumer dev",
+    "dev:client": "pnpm --filter @perforvisor/client dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.4"
+  }
+}
