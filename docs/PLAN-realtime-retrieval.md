@@ -17,23 +17,21 @@ Today the answer step reads every review with keyword matching and a 0.6B model,
 
 ## Two halves
 
-| | What it means | Today | After |
-|---|---|---|---|
-| **Live acquisition** | Getting reviews from platforms on demand | Built-in samples only; SerpApi plugin disabled | SerpApi connectors on, resolved and fetched per question, cached |
-| **Retrieval** | Picking the reviews that answer a question | Keyword overlap | Cosine similarity over EmbeddingGemma 2 vectors; qwen3-4b picks citations |
+|                      | What it means                              | Today                                          | After                                                                     |
+| -------------------- | ------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------- |
+| **Live acquisition** | Getting reviews from platforms on demand   | Built-in samples only; SerpApi plugin disabled | SerpApi connectors on, resolved and fetched per question, cached          |
+| **Retrieval**        | Picking the reviews that answer a question | Keyword overlap                                | Cosine similarity over EmbeddingGemma 2 vectors; qwen3-4b picks citations |
 
 ## Model roles
 
 vLLM serves one model per server, so each role is its own deployment behind its own OpenAI-compatible endpoint.
 
-| Role | Used for | Model (vLLM id) | Size | Notes |
-|---|---|---|---|---|
-| **Chat** | Understanding the question, writing answers and advice, choosing citations | **qwen3-4b** → `Qwen/Qwen3-4B-AWQ` | 4.0B (4-bit, ~2.5 GB) | Chosen by the user. Thinking off (`enable_thinking: false`). Apache-2.0. |
-| **Extraction** | Per-review sentiment, aspects, claims (high volume) | Same as chat | — | Later: a small fine-tuned model. |
-| **Embedding** | Turning reviews and questions into vectors | **EmbeddingGemma 2** → `google/embeddinggemma-2` | 0.74B | Chosen by the user. 768 dims (Matryoshka: truncatable to 512/256/128). Apache-2.0. Needs a vLLM nightly and a small kernel patch on consumer GPUs (see `docker-compose.yml`). |
-| ~~Reranker~~ | — | ~~gemma3:1b~~ | — | **Removed 2026-10-15 (user's decision).** Evaluated as an LLM judge: it lowered recall@3 from 0.86 to 0.63 (scored "overheated on a flight" 2/10 for "Does it overheat?"; answered "yes" to every review in yes/no form). Instead, retrieval ranks by cosine similarity and qwen3-4b, reading the top 8 while answering, decides which reviews to cite. |
-
-
+| Role           | Used for                                                                   | Model (vLLM id)                                  | Size                  | Notes                                                                                                                                                                                                                                                                                                                                                   |
+| -------------- | -------------------------------------------------------------------------- | ------------------------------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Chat**       | Understanding the question, writing answers and advice, choosing citations | **qwen3-4b** → `Qwen/Qwen3-4B-AWQ`               | 4.0B (4-bit, ~2.5 GB) | Chosen by the user. Thinking off (`enable_thinking: false`). Apache-2.0.                                                                                                                                                                                                                                                                                |
+| **Extraction** | Per-review sentiment, aspects, claims (high volume)                        | Same as chat                                     | —                     | Later: a small fine-tuned model.                                                                                                                                                                                                                                                                                                                        |
+| **Embedding**  | Turning reviews and questions into vectors                                 | **EmbeddingGemma 2** → `google/embeddinggemma-2` | 0.74B                 | Chosen by the user. 768 dims (Matryoshka: truncatable to 512/256/128). Apache-2.0. Needs a vLLM nightly and a small kernel patch on consumer GPUs (see `docker-compose.yml`).                                                                                                                                                                           |
+| ~~Reranker~~   | —                                                                          | ~~gemma3:1b~~                                    | —                     | **Removed 2026-10-15 (user's decision).** Evaluated as an LLM judge: it lowered recall@3 from 0.86 to 0.63 (scored "overheated on a flight" 2/10 for "Does it overheat?"; answered "yes" to every review in yes/no form). Instead, retrieval ranks by cosine similarity and qwen3-4b, reading the top 8 while answering, decides which reviews to cite. |
 
 **Local first (laptop, CPU, 15 GB RAM):** everything runs locally until the local version is stable. Rough memory: qwen3-4b ~8 GB weights + gemma3:1b ~2 GB + embedding ~1.2 GB + KV caches + MongoDB and Postgres (~1.5 GB). That is close to the machine's total, so KV caches are kept small and each model can be switched off with a flag while working on other parts.
 
@@ -60,16 +58,16 @@ understand ─► resolve ─► fresh? ──yes──────────�
                  └─ ambiguous ─► ask the user to pick (SSE "choices" event) ─► resume
 ```
 
-| Node | Does | Model | Notes |
-|---|---|---|---|
-| understand | Parses the question into `{subject, platformHint, focus}` (e.g. subject "VoltMax power bank", platform "amazon", focus "overheating") | Chat | Structured output |
-| resolve | Searches connectors for the subject | — | One SerpApi search. Several plausible matches → stream them to the UI and pause (LangGraph `interrupt`, resumed by the user's choice) |
-| fresh? | Has this entity been synced within the TTL (default 24 h)? | — | Skips fetching entirely for repeat questions |
-| fetch | Pulls reviews, newest first, up to a page budget | — | Streams "Fetched 40 reviews…" |
-| store | Upserts entity and reviews into MongoDB (dedupe by `(source, externalId)`) and the search rows into Postgres | — | |
-| embed | Embeds only reviews that don't have vectors yet | Embedding | Batched; cheap |
-| retrieve | Cosine similarity in Tiger Data (Postgres + pgvector): the top 8 reviews of this entity (`ASK_TOP_K`) | Embedding (question) | Full-text and hybrid were evaluated and dropped: on the samples, cosine alone ranked best (MRR 0.89 vs 0.81 hybrid) |
-| answer | Answers from the top 8 with citations; citations are checked against what it was shown | Chat | Answer also states coverage: "3 of 41 reviews mention…" |
+| Node       | Does                                                                                                                                  | Model                | Notes                                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| understand | Parses the question into `{subject, platformHint, focus}` (e.g. subject "VoltMax power bank", platform "amazon", focus "overheating") | Chat                 | Structured output                                                                                                                     |
+| resolve    | Searches connectors for the subject                                                                                                   | —                    | One SerpApi search. Several plausible matches → stream them to the UI and pause (LangGraph `interrupt`, resumed by the user's choice) |
+| fresh?     | Has this entity been synced within the TTL (default 24 h)?                                                                            | —                    | Skips fetching entirely for repeat questions                                                                                          |
+| fetch      | Pulls reviews, newest first, up to a page budget                                                                                      | —                    | Streams "Fetched 40 reviews…"                                                                                                         |
+| store      | Upserts entity and reviews into MongoDB (dedupe by `(source, externalId)`) and the search rows into Postgres                          | —                    |                                                                                                                                       |
+| embed      | Embeds only reviews that don't have vectors yet                                                                                       | Embedding            | Batched; cheap                                                                                                                        |
+| retrieve   | Cosine similarity in Tiger Data (Postgres + pgvector): the top 8 reviews of this entity (`ASK_TOP_K`)                                 | Embedding (question) | Full-text and hybrid were evaluated and dropped: on the samples, cosine alone ranked best (MRR 0.89 vs 0.81 hybrid)                   |
+| answer     | Answers from the top 8 with citations; citations are checked against what it was shown                                                | Chat                 | Answer also states coverage: "3 of 41 reviews mention…"                                                                               |
 
 **Extraction is moved off the question path.** Per-review extraction (aspects, claims, trust signals) is the slow part and isn't needed to answer a question. After `store`, the worker gets a BullMQ job that extracts and enriches the graph in the background; the owner dashboard and claim counts use it.
 
@@ -77,11 +75,11 @@ Latency targets: entity already fresh: under 10 s. New entity: under 30 s, mostl
 
 ## Live acquisition
 
-| Source | Via | What we get | Cost |
-|---|---|---|---|
-| Google Maps | SerpApi `google_maps` (search) + `google_maps_reviews` | Full review list, paginated, newest first | 1 search to resolve, 1 per page of reviews |
-| Amazon | SerpApi Amazon Search + Amazon Product API | Product details, rating histogram, **Amazon's review summary and per-topic insights with mention counts**, and a handful of top reviews. **Not** the full review list. | 1 search + 1 product call |
-| Anything else | CSV import (exists in requirements as ING-3) | Whatever the owner exports | Free |
+| Source        | Via                                                    | What we get                                                                                                                                                            | Cost                                       |
+| ------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Google Maps   | SerpApi `google_maps` (search) + `google_maps_reviews` | Full review list, paginated, newest first                                                                                                                              | 1 search to resolve, 1 per page of reviews |
+| Amazon        | SerpApi Amazon Search + Amazon Product API             | Product details, rating histogram, **Amazon's review summary and per-topic insights with mention counts**, and a handful of top reviews. **Not** the full review list. | 1 search + 1 product call                  |
+| Anything else | CSV import (exists in requirements as ING-3)           | Whatever the owner exports                                                                                                                                             | Free                                       |
 
 Amazon's per-topic insights ("Coffee quality: 1,600 mentions, 1,330 positive") are stored as aggregate signals next to the individual reviews, so answers about Amazon products can cite both.
 
@@ -89,11 +87,11 @@ Amazon's per-topic insights ("Coffee quality: 1,600 mentions, 1,330 positive") a
 
 ## Storage
 
-| Store | Holds | Why |
-|---|---|---|
-| **MongoDB** (sponsor) | Source of truth: entities, reviews, sync state. **Knowledge graph**: `nodes` (entity, aspect, claim, seller, brand) and `edges` collections, traversed with `$graphLookup` | Document upserts fit connector output; `$graphLookup` covers our relationship queries without a dedicated graph database |
-| **Tiger Data** (sponsor, Postgres) | Retrieval index: review text + embeddings (pgvector). Time series: ratings and sentiment over time (TimescaleDB hypertables) | Cosine-similarity search per entity; trends and burst detection (TRU-1) |
-| Redis | Queues, SerpApi cache and quota counter | Already running |
+| Store                              | Holds                                                                                                                                                                      | Why                                                                                                                      |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **MongoDB** (sponsor)              | Source of truth: entities, reviews, sync state. **Knowledge graph**: `nodes` (entity, aspect, claim, seller, brand) and `edges` collections, traversed with `$graphLookup` | Document upserts fit connector output; `$graphLookup` covers our relationship queries without a dedicated graph database |
+| **Tiger Data** (sponsor, Postgres) | Retrieval index: review text + embeddings (pgvector). Time series: ratings and sentiment over time (TimescaleDB hypertables)                                               | Cosine-similarity search per entity; trends and burst detection (TRU-1)                                                  |
+| Redis                              | Queues, SerpApi cache and quota counter                                                                                                                                    | Already running                                                                                                          |
 
 Review text is written to both: MongoDB keeps the full record, Postgres keeps what search needs (id, entity, text, rating, date, embedding).
 
@@ -111,11 +109,11 @@ A name is not an identity. There are many restaurants called "Paradise" and many
 
 In order of preference; the user can always change it.
 
-| Source | Gives | Notes |
-|---|---|---|
-| Browser geolocation (`navigator.geolocation`), with the user's permission | Latitude and longitude | Rounded to 2 decimals (~1 km) in the browser before it is sent anywhere |
-| City picker | City, region, country code | Autocomplete from SerpApi's Locations API (`/locations.json`), which is free and doesn't count against the search quota |
-| Previous choice | Same as above | Remembered in the browser only (localStorage) |
+| Source                                                                    | Gives                      | Notes                                                                                                                   |
+| ------------------------------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Browser geolocation (`navigator.geolocation`), with the user's permission | Latitude and longitude     | Rounded to 2 decimals (~1 km) in the browser before it is sent anywhere                                                 |
+| City picker                                                               | City, region, country code | Autocomplete from SerpApi's Locations API (`/locations.json`), which is free and doesn't count against the search quota |
+| Previous choice                                                           | Same as above              | Remembered in the browser only (localStorage)                                                                           |
 
 If neither is available the app asks for a city instead of guessing. No IP geolocation. The location is sent to the backend in the request body (never in a URL), is not stored with any user identity, and is only passed on to SerpApi as search parameters.
 
@@ -125,15 +123,15 @@ The header of the consumer app shows it as a chip, e.g. "Near Secunderabad, IN �
 
 Engine: SerpApi **Google Maps**, `type=search`.
 
-| Parameter | Value | Why |
-|---|---|---|
-| `q` | The subject from the question ("Paradise restaurant") | |
-| `ll` | `@<lat>,<lng>,<zoom>z` from the user's location; zoom 14z by default (neighbourhood), 12z when the question names a wider area, 15z for "near me" | Search origin (format per SerpApi docs, e.g. `@17.44,78.49,14z`) |
-| `location` + `z` | Instead of `ll` when the user picked a city rather than sharing coordinates | `location` and `ll` can't be combined |
-| `nearby=true` | Only for "near me"-style questions | SerpApi recommends it for "near me" queries and advises against it when `q` already names a place |
-| `gl`, `hl` | Country code and language from the location | Localises results |
+| Parameter        | Value                                                                                                                                             | Why                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `q`              | The subject from the question ("Paradise restaurant")                                                                                             |                                                                                                   |
+| `ll`             | `@<lat>,<lng>,<zoom>z` from the user's location; zoom 14z by default (neighbourhood), 12z when the question names a wider area, 15z for "near me" | Search origin (format per SerpApi docs, e.g. `@17.44,78.49,14z`)                                  |
+| `location` + `z` | Instead of `ll` when the user picked a city rather than sharing coordinates                                                                       | `location` and `ll` can't be combined                                                             |
+| `nearby=true`    | Only for "near me"-style questions                                                                                                                | SerpApi recommends it for "near me" queries and advises against it when `q` already names a place |
+| `gl`, `hl`       | Country code and language from the location                                                                                                       | Localises results                                                                                 |
 
-SerpApi notes that results are *not guaranteed* to fall inside the `ll` area, so the backend also:
+SerpApi notes that results are _not guaranteed_ to fall inside the `ll` area, so the backend also:
 
 1. computes the distance from the user to each result (`gps_coordinates`, haversine),
 2. drops results further than a cut-off (default 25 km; widened when the question names a city),
@@ -146,10 +144,10 @@ Once a place is chosen its `place_id` identifies it everywhere; fetching its rev
 
 For products the location means the **market**: which store and which listing the shopper can actually buy.
 
-| Engine | Location parameters |
-|---|---|
-| SerpApi **Amazon Search** | `amazon_domain` from the country (IN → `amazon.in`, US → `amazon.com`, UK → `amazon.co.uk`, DE → `amazon.de`, JP → `amazon.co.jp`, …); `language`; optional `delivery_zip` (postcode) and `shipping_location` to keep to products that ship to the user |
-| SerpApi **Google Shopping** (for products not on Amazon) | `location` (city level, as SerpApi recommends), `gl`, `hl` |
+| Engine                                                   | Location parameters                                                                                                                                                                                                                                     |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SerpApi **Amazon Search**                                | `amazon_domain` from the country (IN → `amazon.in`, US → `amazon.com`, UK → `amazon.co.uk`, DE → `amazon.de`, JP → `amazon.co.jp`, …); `language`; optional `delivery_zip` (postcode) and `shipping_location` to keep to products that ship to the user |
+| SerpApi **Google Shopping** (for products not on Amazon) | `location` (city level, as SerpApi recommends), `gl`, `hl`                                                                                                                                                                                              |
 
 The product is then fetched with the Amazon Product API on the same domain: rating histogram, Amazon's review summary and per-topic insights, and the top reviews (Amazon doesn't expose the full review list through SerpApi). Products with the same name on different Amazon domains are different listings with different reviews, which is exactly why the domain matters.
 
@@ -161,12 +159,12 @@ understand ─► locate ─► resolve (location-aware) ─► one clear match?
    └─ place or product?       └─ places: Google Maps with ll/location; products: Amazon on the user's domain
 ```
 
-| Node | Change |
-|---|---|
-| understand | Also returns `kind` (place or product), whether the question is "near me", and any place named in it ("in Secunderabad"), which overrides the user's own location |
-| locate (new) | Turns the request's location into engine parameters: `ll` / `location` + `z`, `gl`, `hl`, `amazon_domain`, `delivery_zip` |
-| resolve | Runs the engine for the kind with those parameters, filters and ranks by distance (places) |
-| choices | Pauses for the user's pick when the match isn't clear |
+| Node         | Change                                                                                                                                                            |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| understand   | Also returns `kind` (place or product), whether the question is "near me", and any place named in it ("in Secunderabad"), which overrides the user's own location |
+| locate (new) | Turns the request's location into engine parameters: `ll` / `location` + `z`, `gl`, `hl`, `amazon_domain`, `delivery_zip`                                         |
+| resolve      | Runs the engine for the kind with those parameters, filters and ranks by distance (places)                                                                        |
+| choices      | Pauses for the user's pick when the match isn't clear                                                                                                             |
 
 Request shape (consumer): `{ question, location: { lat, lng } | { city, countryCode, postcode? } }`.
 
@@ -178,14 +176,14 @@ Request shape (consumer): `{ question, location: { lat, lng } | { city, countryC
 
 ### How to test
 
-| Test | Expected |
-|---|---|
+| Test                                                                                                                   | Expected                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | "Is Paradise restaurant good?" with a location in Secunderabad, then the same question from a location in another city | Different restaurants, each near the given location; reviews and answers differ |
-| "Best biryani near me" with coordinates | `nearby=true`; results within the cut-off, sorted by distance |
-| "Is Paradise in Secunderabad good?" asked from another city | The named area wins over the user's location |
-| "Is Trusted protein shake any good?" with country IN, then US | `amazon.in` vs `amazon.com` listings; different reviews |
-| Two branches of the same chain in one city | A `choices` step listing both with addresses and distances |
-| Location permission denied | The app asks for a city instead of searching worldwide |
+| "Best biryani near me" with coordinates                                                                                | `nearby=true`; results within the cut-off, sorted by distance                   |
+| "Is Paradise in Secunderabad good?" asked from another city                                                            | The named area wins over the user's location                                    |
+| "Is Trusted protein shake any good?" with country IN, then US                                                          | `amazon.in` vs `amazon.com` listings; different reviews                         |
+| Two branches of the same chain in one city                                                                             | A `choices` step listing both with addresses and distances                      |
+| Location permission denied                                                                                             | The app asks for a city instead of searching worldwide                          |
 
 ## Kubernetes and compose
 
@@ -206,12 +204,12 @@ This also gives the DEV post real numbers.
 
 Deadline: Sunday 2026-10-18, 11:59 PM PDT.
 
-| Phase | Scope | Testable with |
-|---|---|---|
-| **1** (Thu 15) ✅ | Model registry; compose for chat and embeddings on the GPU; MongoDB collections; Postgres (pgvector) schema; index the samples; cosine retrieval in `/v1/ask`; evaluation set and first numbers; first SerpApi round trip | Samples |
-| **2** (Fri 16) | SerpApi connectors on (Google Maps reviews, Amazon product); quota guard and cache; `understand → resolve → fetch` path with live progress and the "pick one" step; consumer UI for free-text subjects | Real places and products |
-| **3** (Sat 17) | Background extraction in the worker; knowledge graph in MongoDB built from it; rating time series in TimescaleDB; owner watchlist with scheduled re-sync; re-run evaluation | Both apps end to end |
-| **Sun 18** | Polish, demo, DEV post | |
+| Phase             | Scope                                                                                                                                                                                                                     | Testable with            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| **1** (Thu 15) ✅ | Model registry; compose for chat and embeddings on the GPU; MongoDB collections; Postgres (pgvector) schema; index the samples; cosine retrieval in `/v1/ask`; evaluation set and first numbers; first SerpApi round trip | Samples                  |
+| **2** (Fri 16)    | SerpApi connectors on (Google Maps reviews, Amazon product); quota guard and cache; `understand → resolve → fetch` path with live progress and the "pick one" step; consumer UI for free-text subjects                    | Real places and products |
+| **3** (Sat 17)    | Background extraction in the worker; knowledge graph in MongoDB built from it; rating time series in TimescaleDB; owner watchlist with scheduled re-sync; re-run evaluation                                               | Both apps end to end     |
+| **Sun 18**        | Polish, demo, DEV post                                                                                                                                                                                                    |                          |
 
 ## Decisions
 
@@ -224,9 +222,9 @@ Deadline: Sunday 2026-10-18, 11:59 PM PDT.
 
 12 labelled questions over the two samples (`pnpm --filter @perforvisor/backend eval:retrieval`):
 
-| Ranking | Recall@3 | MRR | Recall@8 |
-|---|---|---|---|
-| Keyword overlap (before) | 0.56 | 0.69 | 0.60 |
-| Cosine similarity (EmbeddingGemma 2) | 0.86 | 0.89 | 0.98 |
+| Ranking                              | Recall@3 | MRR  | Recall@8 |
+| ------------------------------------ | -------- | ---- | -------- |
+| Keyword overlap (before)             | 0.56     | 0.69 | 0.60     |
+| Cosine similarity (EmbeddingGemma 2) | 0.86     | 0.89 | 0.98     |
 
 Answers (qwen3-4b reading the top 8): citation precision 0.79, recall 0.79, median 1.0 s per answer. Small test set: indicative, not conclusive.
