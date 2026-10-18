@@ -12,7 +12,13 @@ export interface StreamState<T> {
   error: string | null;
 }
 
-const initial = { status: "idle", message: "", percent: 0, result: null, error: null } as const;
+const initial = {
+  status: "idle",
+  message: "",
+  percent: 0,
+  result: null,
+  error: null,
+} as const;
 
 /** Runs a backend SSE flow (POST) and tracks its progress, result and errors. */
 export function useStream<T>(schema: z.ZodType<T>) {
@@ -34,23 +40,53 @@ export function useStream<T>(schema: z.ZodType<T>) {
           body,
           (event) => {
             if (event.type === "progress") {
-              setState((s) => ({ ...s, message: event.message, percent: event.percent ?? s.percent }));
+              setState((s) => ({
+                ...s,
+                message: event.message,
+                percent: event.percent ?? s.percent,
+              }));
             } else if (event.type === "result") {
               const parsed = schema.safeParse(event.data);
               setState((s) =>
-                parsed.success ? { ...s, status: "done", percent: 100, result: parsed.data } : { ...s, status: "error", error: "The server sent a result in an unexpected format." },
+                parsed.success
+                  ? { ...s, status: "done", percent: 100, result: parsed.data }
+                  : {
+                      ...s,
+                      status: "error",
+                      error:
+                        "The server sent a result in an unexpected format.",
+                    },
               );
             } else if (event.type === "error") {
-              setState((s) => ({ ...s, status: "error", error: event.message }));
+              setState((s) => ({
+                ...s,
+                status: "error",
+                error: event.message,
+              }));
             }
           },
           abort.signal,
         );
         // A stream that ends without a result or error was cut off.
-        setState((s) => (s.status === "running" ? { ...s, status: "error", error: "The connection closed before the result arrived." } : s));
+        setState((s) =>
+          s.status === "running"
+            ? {
+                ...s,
+                status: "error",
+                error: "The connection closed before the result arrived.",
+              }
+            : s,
+        );
       } catch (error) {
         if (abort.signal.aborted) return;
-        setState((s) => ({ ...s, status: "error", error: error instanceof Error ? `Can't reach the server: ${error.message}` : "Can't reach the server." }));
+        setState((s) => ({
+          ...s,
+          status: "error",
+          error:
+            error instanceof Error
+              ? `Can't reach the server: ${error.message}`
+              : "Can't reach the server.",
+        }));
       }
     },
     [schema],

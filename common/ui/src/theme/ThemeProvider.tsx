@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type ThemePreference = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
@@ -16,7 +23,8 @@ const darkQuery = () => window.matchMedia("(prefers-color-scheme: dark)");
 function readStored(key: string): ThemePreference {
   try {
     const value = localStorage.getItem(key);
-    if (value === "light" || value === "dark" || value === "system") return value;
+    if (value === "light" || value === "dark" || value === "system")
+      return value;
   } catch {
     // Storage can be unavailable (private mode, blocked site data).
   }
@@ -24,8 +32,16 @@ function readStored(key: string): ThemePreference {
 }
 
 /** Sets data-theme on <html>; each app's theme CSS defines tokens for both values. */
-export function ThemeProvider({ children, storageKey = "theme" }: { children: ReactNode; storageKey?: string }) {
-  const [preference, setPreferenceState] = useState<ThemePreference>(() => readStored(storageKey));
+export function ThemeProvider({
+  children,
+  storageKey = "theme",
+}: {
+  children: ReactNode;
+  storageKey?: string;
+}) {
+  const [preference, setPreferenceState] = useState<ThemePreference>(() =>
+    readStored(storageKey),
+  );
   const [systemDark, setSystemDark] = useState(() => darkQuery().matches);
 
   useEffect(() => {
@@ -35,7 +51,8 @@ export function ThemeProvider({ children, storageKey = "theme" }: { children: Re
     return () => query.removeEventListener("change", onChange);
   }, []);
 
-  const resolved: ResolvedTheme = preference === "system" ? (systemDark ? "dark" : "light") : preference;
+  const resolved: ResolvedTheme =
+    preference === "system" ? (systemDark ? "dark" : "light") : preference;
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolved;
@@ -54,7 +71,11 @@ export function ThemeProvider({ children, storageKey = "theme" }: { children: Re
     [storageKey],
   );
 
-  return <ThemeContext.Provider value={{ preference, resolved, setPreference }}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={{ preference, resolved, setPreference }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme(): ThemeContextValue {
