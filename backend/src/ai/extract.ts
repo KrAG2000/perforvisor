@@ -16,16 +16,25 @@ Respond with JSON only.`;
 
 /** Per-review extraction with the extraction model; null when the model fails or returns junk. */
 export function createExtractor(config: Config) {
-  const model = createChatModel(config, { role: "extract", temperature: 0 }).withStructuredOutput(ReviewExtraction, {
+  const model = createChatModel(config, {
+    role: "extract",
+    temperature: 0,
+  }).withStructuredOutput(ReviewExtraction, {
     name: "review_extraction",
     method: "jsonSchema",
   });
-  return async (review: AnalysisReviewInput, signal?: AbortSignal): Promise<ReviewExtraction | null> => {
+  return async (
+    review: AnalysisReviewInput,
+    signal?: AbortSignal,
+  ): Promise<ReviewExtraction | null> => {
     try {
       return await model.invoke(
         [
           { role: "system", content: EXTRACT_PROMPT },
-          { role: "user", content: `Rating: ${review.rating ?? "unknown"}/5\nReview: ${review.text}` },
+          {
+            role: "user",
+            content: `Rating: ${review.rating ?? "unknown"}/5\nReview: ${review.text}`,
+          },
         ],
         { signal },
       );

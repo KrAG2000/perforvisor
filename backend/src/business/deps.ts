@@ -7,6 +7,17 @@ import { createExtractor } from "../ai/extract.ts";
 import { createGraphBuilder } from "./graph.ts";
 import type { SyncDeps } from "./sync.ts";
 
-export function createSyncDeps(config: Config, stores: { mongo: Mongo; pg: Postgres }, connectors: Connectors): SyncDeps {
-  return { config, stores, connectors, extract: createExtractor(config), advise: createAdvisor(config), graph: createGraphBuilder(config, stores) };
+export function createSyncDeps(
+  config: Config,
+  stores: { mongo: Mongo; pg: Postgres },
+  connectors: Connectors,
+): SyncDeps {
+  return {
+    config,
+    stores,
+    connectors,
+    extract: createExtractor(config),
+    advise: createAdvisor(config),
+    graph: createGraphBuilder(config, stores),
+  };
 }

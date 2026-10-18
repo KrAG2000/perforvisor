@@ -33,7 +33,9 @@ export const ReviewExtraction = z.object({
   claims: z
     .array(z.object({ text: z.string().max(120), aspect: Aspect }))
     .max(5)
-    .describe("Short, specific factual claims made by the reviewer, e.g. 'battery overheats after an hour', each with the aspect it is about"),
+    .describe(
+      "Short, specific factual claims made by the reviewer, e.g. 'battery overheats after an hour', each with the aspect it is about",
+    ),
 });
 export type ReviewExtraction = z.infer<typeof ReviewExtraction>;
 
@@ -64,7 +66,10 @@ export const AspectStat = z.object({
 });
 export type AspectStat = z.infer<typeof AspectStat>;
 
-export const ClaimCount = z.object({ claim: z.string(), count: z.number().int() });
+export const ClaimCount = z.object({
+  claim: z.string(),
+  count: z.number().int(),
+});
 export type ClaimCount = z.infer<typeof ClaimCount>;
 
 export const AnalysisStats = z.object({
@@ -72,7 +77,11 @@ export const AnalysisStats = z.object({
   analysedCount: z.number().int(),
   failedCount: z.number().int(),
   averageRating: z.number().nullable(),
-  sentiment: z.object({ positive: z.number().int(), neutral: z.number().int(), negative: z.number().int() }),
+  sentiment: z.object({
+    positive: z.number().int(),
+    neutral: z.number().int(),
+    negative: z.number().int(),
+  }),
   aspects: z.array(AspectStat),
   topClaims: z.array(ClaimCount),
   /** Claims from positive and negative reviews, excluding suspicious ones. */
@@ -80,8 +89,12 @@ export const AnalysisStats = z.object({
   complaints: z.array(ClaimCount),
   /** Reviews left out of praise and complaints: rating mismatches and all but one of each duplicate group. */
   suspiciousReviewIds: z.array(z.string()),
-  ratingMismatches: z.array(z.string()).describe("Review ids whose rating contradicts their text"),
-  duplicateGroups: z.array(z.array(z.string())).describe("Groups of review ids with near-identical text"),
+  ratingMismatches: z
+    .array(z.string())
+    .describe("Review ids whose rating contradicts their text"),
+  duplicateGroups: z
+    .array(z.array(z.string()))
+    .describe("Groups of review ids with near-identical text"),
 });
 export type AnalysisStats = z.infer<typeof AnalysisStats>;
 
@@ -90,8 +103,15 @@ export type AnalysisStats = z.infer<typeof AnalysisStats>;
  * or weakness is done in code, which small models get wrong.
  */
 export const AdvisorDraft = z.object({
-  verdict: z.string().describe("One or two sentences, under 40 words, on how this place or product is performing"),
-  actions: z.array(z.string()).max(3).describe("Concrete things the owner should do next, most important first"),
+  verdict: z
+    .string()
+    .describe(
+      "One or two sentences, under 40 words, on how this place or product is performing",
+    ),
+  actions: z
+    .array(z.string())
+    .max(3)
+    .describe("Concrete things the owner should do next, most important first"),
 });
 export type AdvisorDraft = z.infer<typeof AdvisorDraft>;
 

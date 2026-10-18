@@ -12,5 +12,7 @@ export const SampleDataset = z.object({
 });
 export type SampleDataset = z.infer<typeof SampleDataset>;
 
-export const SampleSummary = SampleDataset.omit({ reviews: true }).extend({ reviewCount: z.number().int() });
+export const SampleSummary = SampleDataset.omit({ reviews: true }).extend({
+  reviewCount: z.number().int(),
+});
 export type SampleSummary = z.infer<typeof SampleSummary>;

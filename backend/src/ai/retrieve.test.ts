@@ -9,7 +9,10 @@ const reviews = [
 
 describe("rankReviews", () => {
   it("ranks reviews matching the question's terms first, including word variants", () => {
-    const ranked = rankReviews("Do people say this power bank overheats?", reviews);
+    const ranked = rankReviews(
+      "Do people say this power bank overheats?",
+      reviews,
+    );
     expect(ranked.map((r) => r.review.id)).toEqual(["b", "c", "a"]);
     expect(ranked[0]!.score).toBeGreaterThan(0);
     expect(ranked[2]!.score).toBe(0);

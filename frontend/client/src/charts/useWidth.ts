@@ -7,7 +7,10 @@ export function useWidth<T extends HTMLElement>(fallback = 600) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new ResizeObserver(([entry]) => entry && setWidth(Math.max(240, Math.floor(entry.contentRect.width))));
+    const observer = new ResizeObserver(
+      ([entry]) =>
+        entry && setWidth(Math.max(240, Math.floor(entry.contentRect.width))),
+    );
     observer.observe(el);
     return () => observer.disconnect();
   }, []);

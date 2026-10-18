@@ -15,7 +15,10 @@ const ids = new Set<string>([...routes.map((r) => r.id), "connect"]);
 
 const parse = (hash: string): { id: RouteId; params: URLSearchParams } => {
   const [path = "", query = ""] = hash.replace(/^#\/?/, "").split("?");
-  return { id: ids.has(path) ? (path as RouteId) : "overview", params: new URLSearchParams(query) };
+  return {
+    id: ids.has(path) ? (path as RouteId) : "overview",
+    params: new URLSearchParams(query),
+  };
 };
 
 /** Hash routing (#/trends, #/connect?role=competitor): bookmarkable, works with back/forward. */
@@ -29,7 +32,8 @@ export function useRoute() {
   return route;
 }
 
-export const href = (id: RouteId, params?: Record<string, string>) => `#/${id}${params ? `?${new URLSearchParams(params)}` : ""}`;
+export const href = (id: RouteId, params?: Record<string, string>) =>
+  `#/${id}${params ? `?${new URLSearchParams(params)}` : ""}`;
 export const navigate = (id: RouteId, params?: Record<string, string>) => {
   window.location.hash = href(id, params);
 };

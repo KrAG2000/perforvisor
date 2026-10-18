@@ -11,7 +11,10 @@ export interface SseStream {
 }
 
 /** Takes over the response and streams StreamEvents as server-sent events. */
-export function openSse(request: FastifyRequest, reply: FastifyReply): SseStream {
+export function openSse(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): SseStream {
   reply.hijack();
   const res = reply.raw;
   res.writeHead(200, {
@@ -36,7 +39,8 @@ export function openSse(request: FastifyRequest, reply: FastifyReply): SseStream
 
   return {
     send(event) {
-      if (!closed) res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+      if (!closed)
+        res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
     },
     get closed() {
       return closed;
@@ -51,5 +55,7 @@ export function openSse(request: FastifyRequest, reply: FastifyReply): SseStream
 // hijack() skips Fastify's onSend hooks, so @fastify/cors headers must be copied over.
 function corsHeaders(request: FastifyRequest): Record<string, string> {
   const origin = request.headers.origin;
-  return origin ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" } : {};
+  return origin
+    ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" }
+    : {};
 }

@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { AdvisorSummary, AnalysisReviewInput, AnalysisStats, Aspect, Sentiment } from "./analysis.ts";
+import {
+  AdvisorSummary,
+  AnalysisReviewInput,
+  AnalysisStats,
+  Aspect,
+  Sentiment,
+} from "./analysis.ts";
 import { Entity, EntityKind } from "./entity.ts";
 
 /** A tracked place or product: the owner's own, or a competitor of one of theirs. */
@@ -39,7 +45,12 @@ export const BusinessSummary = z.object({
   storedReviews: z.number().int(),
   analysedReviews: z.number().int(),
   headline: z
-    .object({ averageRating: z.number().nullable(), positiveShare: z.number(), suspicious: z.number().int(), generatedAt: z.iso.datetime() })
+    .object({
+      averageRating: z.number().nullable(),
+      positiveShare: z.number(),
+      suspicious: z.number().int(),
+      generatedAt: z.iso.datetime(),
+    })
     .optional(),
 });
 export type BusinessSummary = z.infer<typeof BusinessSummary>;
@@ -52,7 +63,10 @@ export const BusinessReport = z.object({
 });
 export type BusinessReport = z.infer<typeof BusinessReport>;
 
-export const BusinessDetail = z.object({ business: BusinessSummary, report: BusinessReport.nullable() });
+export const BusinessDetail = z.object({
+  business: BusinessSummary,
+  report: BusinessReport.nullable(),
+});
 export type BusinessDetail = z.infer<typeof BusinessDetail>;
 
 /** Start tracking an entity found through a connector's search. */
@@ -126,7 +140,14 @@ export const GraphClaim = z.object({
 export type GraphClaim = z.infer<typeof GraphClaim>;
 
 export const KnowledgeGraph = z.object({
-  aspects: z.array(z.object({ aspect: Aspect, mentions: z.number().int(), score: z.number(), claims: z.array(GraphClaim) })),
+  aspects: z.array(
+    z.object({
+      aspect: Aspect,
+      mentions: z.number().int(),
+      score: z.number(),
+      claims: z.array(GraphClaim),
+    }),
+  ),
   nodes: z.number().int(),
   edges: z.number().int(),
 });
@@ -140,7 +161,10 @@ export const Comparison = z.object({
       role: TrackRole,
       averageRating: z.number().nullable(),
       analysedReviews: z.number().int(),
-      aspects: z.record(z.string(), z.object({ score: z.number(), mentions: z.number().int() })),
+      aspects: z.record(
+        z.string(),
+        z.object({ score: z.number(), mentions: z.number().int() }),
+      ),
       topPraise: z.array(z.string()),
       topComplaints: z.array(z.string()),
     }),

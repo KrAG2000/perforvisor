@@ -8,7 +8,10 @@
       // Apply the saved theme before first paint to avoid a light/dark flash.
       try {
         var p = localStorage.getItem("perforvisor-consumer-theme");
-        var dark = p === "dark" || ((!p || p === "system") && matchMedia("(prefers-color-scheme: dark)").matches);
+        var dark =
+          p === "dark" ||
+          ((!p || p === "system") &&
+            matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.dataset.theme = dark ? "dark" : "light";
       } catch (e) {}
     </script>

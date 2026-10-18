@@ -4,10 +4,18 @@ import { StreamEvent } from "../schemas/stream.ts";
  * POSTs JSON and reads the server-sent events in the response.
  * EventSource only supports GET, so this parses the stream with fetch.
  */
-export async function postSse(url: string, body: unknown, onEvent: (event: StreamEvent) => void, signal?: AbortSignal): Promise<void> {
+export async function postSse(
+  url: string,
+  body: unknown,
+  onEvent: (event: StreamEvent) => void,
+  signal?: AbortSignal,
+): Promise<void> {
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+    },
     body: JSON.stringify(body),
     signal,
   });
@@ -15,7 +23,9 @@ export async function postSse(url: string, body: unknown, onEvent: (event: Strea
   // Validation errors come back as plain JSON before any stream starts.
   if (!res.ok || !res.body) {
     const detail = await res.json().catch(() => null);
-    const message = (detail as { message?: string } | null)?.message ?? `Request failed (${res.status})`;
+    const message =
+      (detail as { message?: string } | null)?.message ??
+      `Request failed (${res.status})`;
     onEvent({ type: "error", message });
     return;
   }

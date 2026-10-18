@@ -1,13 +1,7 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src",
-    "scripts",
-    "tsup.config.ts"
-  ]
+  "include": ["src", "scripts", "tsup.config.ts"]
 }

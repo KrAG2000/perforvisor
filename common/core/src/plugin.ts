@@ -34,7 +34,10 @@ export interface Connector {
   /** Find entities matching a free-text query or a URL on the platform. */
   search(query: string): Promise<Entity[]>;
   getEntity(ref: EntityRef): Promise<Entity>;
-  fetchReviews(ref: EntityRef, options?: FetchReviewsOptions): Promise<ReviewPage>;
+  fetchReviews(
+    ref: EntityRef,
+    options?: FetchReviewsOptions,
+  ): Promise<ReviewPage>;
 }
 
 export interface ConnectorPlugin<Config = unknown> {
@@ -47,6 +50,8 @@ export interface ConnectorPlugin<Config = unknown> {
 export type Plugin = ConnectorPlugin<any>;
 
 /** Identity helper that gives plugin authors type inference for their config. */
-export function defineConnector<Config>(plugin: ConnectorPlugin<Config>): ConnectorPlugin<Config> {
+export function defineConnector<Config>(
+  plugin: ConnectorPlugin<Config>,
+): ConnectorPlugin<Config> {
   return plugin;
 }

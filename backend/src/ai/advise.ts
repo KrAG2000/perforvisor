@@ -1,4 +1,8 @@
-import { AdvisorDraft, type AdvisorSummary, type AnalysisStats } from "@perforvisor/core";
+import {
+  AdvisorDraft,
+  type AdvisorSummary,
+  type AnalysisStats,
+} from "@perforvisor/core";
 import type { Config } from "../config.ts";
 import { createChatModel } from "./model.ts";
 
@@ -15,20 +19,34 @@ Do not invent facts. Respond with JSON only.`;
  * the classified claims (code), not the model: small models mix them up.
  */
 export function createAdvisor(config: Config) {
-  const model = createChatModel(config, { temperature: 0.3, maxTokens: 400 }).withStructuredOutput(AdvisorDraft, {
+  const model = createChatModel(config, {
+    temperature: 0.3,
+    maxTokens: 400,
+  }).withStructuredOutput(AdvisorDraft, {
     name: "advisor_summary",
     method: "jsonSchema",
   });
 
-  return async (entityName: string, stats: AnalysisStats, signal?: AbortSignal): Promise<AdvisorSummary | null> => {
+  return async (
+    entityName: string,
+    stats: AnalysisStats,
+    signal?: AbortSignal,
+  ): Promise<AdvisorSummary | null> => {
     if (stats.analysedCount === 0) return null;
-    const label = (aspects: typeof stats.aspects) => aspects.map((a) => `${a.aspect.replace("_", " ")} (${a.mentions} reviews)`);
+    const label = (aspects: typeof stats.aspects) =>
+      aspects.map(
+        (a) => `${a.aspect.replace("_", " ")} (${a.mentions} reviews)`,
+      );
     const facts = {
       name: entityName,
       reviews: stats.reviewCount,
       averageRating: stats.averageRating,
       praisedAspects: label(stats.aspects.filter((a) => a.score > 0)),
-      criticisedAspects: label(stats.aspects.filter((a) => a.score < 0).sort((a, b) => a.score - b.score)),
+      criticisedAspects: label(
+        stats.aspects
+          .filter((a) => a.score < 0)
+          .sort((a, b) => a.score - b.score),
+      ),
       praise: stats.praise.map((c) => c.claim),
       complaints: stats.complaints.map((c) => c.claim),
     };

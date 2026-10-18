@@ -6,7 +6,12 @@ const SOURCE = "sample";
 
 /** Built-in demo businesses, served through the connector interface like any platform. Free. */
 export function sampleConnector(): LoadedConnector {
-  const manifest: PluginManifest = { id: "samples", name: "Sample data", kind: "connector", source: SOURCE };
+  const manifest: PluginManifest = {
+    id: "samples",
+    name: "Sample data",
+    kind: "connector",
+    source: SOURCE,
+  };
   const toEntity = (s: (typeof samples)[number]): Entity => ({
     ref: { source: SOURCE, externalId: s.id },
     kind: s.kind,
@@ -23,7 +28,9 @@ export function sampleConnector(): LoadedConnector {
   const connector: Connector = {
     async search(query) {
       const q = query.toLowerCase();
-      const matches = samples.filter((s) => `${s.entityName} ${s.category}`.toLowerCase().includes(q));
+      const matches = samples.filter((s) =>
+        `${s.entityName} ${s.category}`.toLowerCase().includes(q),
+      );
       return (matches.length ? matches : samples).map(toEntity);
     },
     async getEntity(ref) {
@@ -32,7 +39,12 @@ export function sampleConnector(): LoadedConnector {
     async fetchReviews(ref, options = {}) {
       const sample = find(ref.externalId);
       const reviews = sample.reviews
-        .filter((r) => !options.since || !r.createdAt || new Date(r.createdAt) > options.since)
+        .filter(
+          (r) =>
+            !options.since ||
+            !r.createdAt ||
+            new Date(r.createdAt) > options.since,
+        )
         .map((r) => ({
           source: SOURCE,
           externalId: r.id,
