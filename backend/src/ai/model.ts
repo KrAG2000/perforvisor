@@ -1,3 +1,4 @@
+import "./trace-hints.ts";
 import { ChatOpenAI } from "@langchain/openai";
 import { chatEndpoint, type Config, type ModelRole } from "../config.ts";
 
@@ -6,7 +7,10 @@ import { chatEndpoint, type Config, type ModelRole } from "../config.ts";
  * Qwen3's thinking mode is switched off: every call here is schema-constrained,
  * and thinking would multiply latency for little gain.
  */
-export function createChatModel(config: Config, options: { role?: ModelRole; temperature?: number; maxTokens?: number } = {}) {
+export function createChatModel(
+  config: Config,
+  options: { role?: ModelRole; temperature?: number; maxTokens?: number } = {},
+) {
   const { baseUrl, model } = chatEndpoint(config, options.role ?? "chat");
   return new ChatOpenAI({
     model,
@@ -19,16 +23,26 @@ export function createChatModel(config: Config, options: { role?: ModelRole; tem
   });
 }
 
-export type ModelStatus = { ok: true; models: string[] } | { ok: false; error: string };
+export type ModelStatus =
+  { ok: true; models: string[] } | { ok: false; error: string };
 
-export async function checkModelServer(baseUrl: string, apiKey: string): Promise<ModelStatus> {
+export async function checkModelServer(
+  baseUrl: string,
+  apiKey: string,
+): Promise<ModelStatus> {
   try {
-    const res = await fetch(`${baseUrl}/models`, { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`${baseUrl}/models`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(3000),
+    });
     if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
     const body = (await res.json()) as { data?: { id: string }[] };
     return { ok: true, models: (body.data ?? []).map((m) => m.id) };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
@@ -39,7 +53,16 @@ export async function checkModelRoles(config: Config) {
     embed: { baseUrl: config.EMBED_BASE_URL, model: config.EMBED_MODEL },
   };
   const entries = await Promise.all(
-    Object.entries(roles).map(async ([role, info]) => [role, { ...info, ...(await checkModelServer(info.baseUrl, config.MODEL_API_KEY)) }] as const),
+    Object.entries(roles).map(
+      async ([role, info]) =>
+        [
+          role,
+          {
+            ...info,
+            ...(await checkModelServer(info.baseUrl, config.MODEL_API_KEY)),
+          },
+        ] as const,
+    ),
   );
   return Object.fromEntries(entries);
 }
