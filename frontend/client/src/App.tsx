@@ -11,7 +11,10 @@ import { Overview } from "./pages/Overview.tsx";
 import { Trends } from "./pages/Trends.tsx";
 import { Trust } from "./pages/Trust.tsx";
 
-const titles: Record<RouteId, string> = { ...Object.fromEntries(routes.map((r) => [r.id, r.label])), connect: "Connect a business" } as Record<RouteId, string>;
+const titles: Record<RouteId, string> = {
+  ...Object.fromEntries(routes.map((r) => [r.id, r.label])),
+  connect: "Connect a business",
+} as Record<RouteId, string>;
 
 function Shell() {
   const route = useRoute();
@@ -52,17 +55,28 @@ function Shell() {
             }}
           >
             {owned.map((b) => (
-              <option key={b.key} value={b.key}>{b.name}</option>
+              <option key={b.key} value={b.key}>
+                {b.name}
+              </option>
             ))}
           </Select>
         )}
         <nav className="nav">
           {routes.map((r) => (
-            <a key={r.id} href={href(r.id)} className="nav-item" aria-current={r.id === route.id ? "page" : undefined}>
+            <a
+              key={r.id}
+              href={href(r.id)}
+              className="nav-item"
+              aria-current={r.id === route.id ? "page" : undefined}
+            >
               {r.label}
             </a>
           ))}
-          <a href={href("connect")} className="nav-item nav-item--add" aria-current={route.id === "connect" ? "page" : undefined}>
+          <a
+            href={href("connect")}
+            className="nav-item nav-item--add"
+            aria-current={route.id === "connect" ? "page" : undefined}
+          >
             + Connect a business
           </a>
         </nav>
@@ -76,7 +90,10 @@ function Shell() {
           {business && route.id !== "connect" && (
             <span className="topbar-context">
               {business.name}
-              <span className="muted small"> · {sourceLabel[business.source] ?? business.source}</span>
+              <span className="muted small">
+                {" "}
+                · {sourceLabel[business.source] ?? business.source}
+              </span>
             </span>
           )}
         </header>

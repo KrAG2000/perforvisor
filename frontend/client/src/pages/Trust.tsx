@@ -8,20 +8,42 @@ import { formatDate } from "../lib/format.ts";
 export function Trust() {
   return (
     <RequireReport>
-      {({ business, report }) => <TrustView businessKey={business.key} generatedAt={report!.generatedAt} stats={report!.stats} />}
+      {({ business, report }) => (
+        <TrustView
+          businessKey={business.key}
+          generatedAt={report!.generatedAt}
+          stats={report!.stats}
+        />
+      )}
     </RequireReport>
   );
 }
 
-function TrustView({ businessKey, generatedAt, stats }: { businessKey: string; generatedAt: string; stats: AnalysisStats }) {
+function TrustView({
+  businessKey,
+  generatedAt,
+  stats,
+}: {
+  businessKey: string;
+  generatedAt: string;
+  stats: AnalysisStats;
+}) {
   const [reviews, setReviews] = useState<ReviewItem[] | null>(null);
   const [trends, setTrends] = useState<Trends | null>(null);
   useEffect(() => {
-    api.reviews(businessKey, "suspicious").then(setReviews, () => setReviews([]));
+    api
+      .reviews(businessKey, "suspicious")
+      .then(setReviews, () => setReviews([]));
     api.trends(businessKey).then(setTrends, () => setTrends(null));
   }, [businessKey, generatedAt]);
 
-  const trustScore = stats.reviewCount ? Math.round(((stats.reviewCount - stats.suspiciousReviewIds.length) / stats.reviewCount) * 100) : 100;
+  const trustScore = stats.reviewCount
+    ? Math.round(
+        ((stats.reviewCount - stats.suspiciousReviewIds.length) /
+          stats.reviewCount) *
+          100,
+      )
+    : 100;
   const bursts = trends?.bursts ?? [];
 
   return (
@@ -48,7 +70,10 @@ function TrustView({ businessKey, generatedAt, stats }: { businessKey: string; g
           <div className="stat-hint">unusual daily spikes</div>
         </Card>
       </div>
-      <p className="muted">Suspicious reviews are left out of praise, complaints and advice, so they can't skew what you see.</p>
+      <p className="muted">
+        Suspicious reviews are left out of praise, complaints and advice, so
+        they can't skew what you see.
+      </p>
 
       {bursts.length > 0 && (
         <Card>
@@ -56,7 +81,15 @@ function TrustView({ businessKey, generatedAt, stats }: { businessKey: string; g
           <ul className="list list--plain">
             {bursts.map((b) => (
               <li key={b.day}>
-                <span className="badge badge--warn">{b.kind === "five_star" ? "5★ burst" : b.kind === "one_star" ? "1★ burst" : "Volume spike"}</span> {formatDate(b.day)}: {b.reviews} reviews, usually {b.typical} a day
+                <span className="badge badge--warn">
+                  {b.kind === "five_star"
+                    ? "5★ burst"
+                    : b.kind === "one_star"
+                      ? "1★ burst"
+                      : "Volume spike"}
+                </span>{" "}
+                {formatDate(b.day)}: {b.reviews} reviews, usually {b.typical} a
+                day
               </li>
             ))}
           </ul>
@@ -76,7 +109,9 @@ function TrustView({ businessKey, generatedAt, stats }: { businessKey: string; g
               <div className="review-meta">
                 <span className="badges">
                   {r.flags.map((f) => (
-                    <span key={f} className="badge badge--warn">{f}</span>
+                    <span key={f} className="badge badge--warn">
+                      {f}
+                    </span>
                   ))}
                 </span>
                 <span className="muted small">

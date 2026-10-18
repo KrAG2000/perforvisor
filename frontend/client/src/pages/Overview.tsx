@@ -9,10 +9,32 @@ export function Overview() {
       {({ business, report }) => {
         const { stats, summary } = report!;
         const cards = [
-          { label: "Average rating", value: stats.averageRating?.toFixed(1) ?? "—", hint: business.platformRating !== undefined ? `${business.platformRating}★ on ${business.source === "google_maps" ? "Google Maps" : "the platform"}` : "from synced reviews" },
-          { label: "Positive reviews", value: `${stats.analysedCount ? Math.round((stats.sentiment.positive / stats.analysedCount) * 100) : 0}%`, hint: `${stats.sentiment.negative} negative` },
-          { label: "Reviews analysed", value: String(stats.analysedCount), hint: business.platformReviewCount ? `of ${business.platformReviewCount.toLocaleString()} on the platform` : `${business.storedReviews} stored` },
-          { label: "Suspicious reviews", value: String(stats.suspiciousReviewIds.length), hint: "left out of the advice", link: href("trust") },
+          {
+            label: "Average rating",
+            value: stats.averageRating?.toFixed(1) ?? "—",
+            hint:
+              business.platformRating !== undefined
+                ? `${business.platformRating}★ on ${business.source === "google_maps" ? "Google Maps" : "the platform"}`
+                : "from synced reviews",
+          },
+          {
+            label: "Positive reviews",
+            value: `${stats.analysedCount ? Math.round((stats.sentiment.positive / stats.analysedCount) * 100) : 0}%`,
+            hint: `${stats.sentiment.negative} negative`,
+          },
+          {
+            label: "Reviews analysed",
+            value: String(stats.analysedCount),
+            hint: business.platformReviewCount
+              ? `of ${business.platformReviewCount.toLocaleString()} on the platform`
+              : `${business.storedReviews} stored`,
+          },
+          {
+            label: "Suspicious reviews",
+            value: String(stats.suspiciousReviewIds.length),
+            hint: "left out of the advice",
+            link: href("trust"),
+          },
         ];
         return (
           <div className="page">
@@ -20,7 +42,9 @@ export function Overview() {
               {cards.map((c) => (
                 <Card key={c.label}>
                   <div className="stat-label">{c.label}</div>
-                  <div className="stat-value">{c.link ? <a href={c.link}>{c.value}</a> : c.value}</div>
+                  <div className="stat-value">
+                    {c.link ? <a href={c.link}>{c.value}</a> : c.value}
+                  </div>
                   <div className="stat-hint">{c.hint}</div>
                 </Card>
               ))}
@@ -43,13 +67,24 @@ export function Overview() {
               </Card>
             ) : (
               <Card>
-                <p className="muted">The advisor couldn't write a summary this time. The numbers below are still accurate.</p>
+                <p className="muted">
+                  The advisor couldn't write a summary this time. The numbers
+                  below are still accurate.
+                </p>
               </Card>
             )}
 
             <div className="two-col">
-              <ClaimList title="Customers praise" claims={stats.praise} empty="Nothing yet." />
-              <ClaimList title="Customers complain" claims={stats.complaints} empty="No complaints found." />
+              <ClaimList
+                title="Customers praise"
+                claims={stats.praise}
+                empty="Nothing yet."
+              />
+              <ClaimList
+                title="Customers complain"
+                claims={stats.complaints}
+                empty="No complaints found."
+              />
             </div>
 
             <Card>
@@ -63,7 +98,15 @@ export function Overview() {
   );
 }
 
-function ClaimList({ title, claims, empty }: { title: string; claims: { claim: string; count: number }[]; empty: string }) {
+function ClaimList({
+  title,
+  claims,
+  empty,
+}: {
+  title: string;
+  claims: { claim: string; count: number }[];
+  empty: string;
+}) {
   return (
     <Card>
       <div className="section-label">{title}</div>
@@ -71,7 +114,8 @@ function ClaimList({ title, claims, empty }: { title: string; claims: { claim: s
         <ul className="list">
           {claims.map((c) => (
             <li key={c.claim}>
-              {c.claim} {c.count > 1 && <span className="count">×{c.count}</span>}
+              {c.claim}{" "}
+              {c.count > 1 && <span className="count">×{c.count}</span>}
             </li>
           ))}
         </ul>

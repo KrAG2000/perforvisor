@@ -4,13 +4,36 @@ import { Button, Card, Input, Progress, useStream } from "@perforvisor/ui";
 import { RequireReport } from "../components/Empty.tsx";
 import { formatDate } from "../lib/format.ts";
 
-const suggestions = ["What do customers complain about most?", "What should I fix first?", "What do people love?", "Is delivery a problem?"];
+const suggestions = [
+  "What do customers complain about most?",
+  "What should I fix first?",
+  "What do people love?",
+  "Is delivery a problem?",
+];
 
 export function Ask() {
-  return <RequireReport>{({ business }) => <AskView businessKey={business.key} name={business.name} reviews={business.storedReviews} />}</RequireReport>;
+  return (
+    <RequireReport>
+      {({ business }) => (
+        <AskView
+          businessKey={business.key}
+          name={business.name}
+          reviews={business.storedReviews}
+        />
+      )}
+    </RequireReport>
+  );
 }
 
-function AskView({ businessKey, name, reviews }: { businessKey: string; name: string; reviews: number }) {
+function AskView({
+  businessKey,
+  name,
+  reviews,
+}: {
+  businessKey: string;
+  name: string;
+  reviews: number;
+}) {
   const [question, setQuestion] = useState("");
   const stream = useStream(AskResult);
   const running = stream.status === "running";
@@ -27,17 +50,33 @@ function AskView({ businessKey, name, reviews }: { businessKey: string; name: st
   return (
     <div className="page">
       <p className="muted">
-        Ask about <strong>{name}</strong>. Answers come only from its {reviews} synced reviews, with the ones used shown below.
+        Ask about <strong>{name}</strong>. Answers come only from its {reviews}{" "}
+        synced reviews, with the ones used shown below.
       </p>
       <form className="input-row" onSubmit={onSubmit}>
-        <Input value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask a question about your reviews" aria-label="Question" />
-        <Button variant="primary" type="submit" disabled={question.trim().length < 3 || running}>
+        <Input
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="Ask a question about your reviews"
+          aria-label="Question"
+        />
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={question.trim().length < 3 || running}
+        >
           Ask
         </Button>
       </form>
       <div className="chips">
         {suggestions.map((s) => (
-          <Button key={s} variant="secondary" size="sm" onClick={() => ask(s)} disabled={running}>
+          <Button
+            key={s}
+            variant="secondary"
+            size="sm"
+            onClick={() => ask(s)}
+            disabled={running}
+          >
             {s}
           </Button>
         ))}
