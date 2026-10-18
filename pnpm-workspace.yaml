@@ -1,5 +1,6 @@
 packages:
   - backend
+  - jobs
   - frontend/*
   - plugins/*
   - common/*

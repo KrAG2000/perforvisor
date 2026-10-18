@@ -4,7 +4,7 @@ name: lets-make-osp-that-someone-will-actually-pay-for
 
 # Local development stack.
 #
-#   docker compose up -d                  Redis, MongoDB, Postgres (pgvector + TimescaleDB)
+#   docker compose up -d                  MongoDB, Postgres (pgvector + TimescaleDB)
 #   docker compose --profile llm up -d    + the model servers on the GPU (chat, embeddings)
 #
 # Model servers share one 8 GB GPU. Each takes a fixed share (VLLM_*_GPU_SHARE) and they
@@ -40,13 +40,6 @@ x-vllm: &vllm
     start_period: 60s
 
 services:
-  redis:
-    image: redis:8-alpine
-    ports:
-      - "6380:6379" # host 6380: 6379 is often taken by a system Redis
-    volumes:
-      - redis-data:/data
-    command: ["redis-server", "--appendonly", "yes"]
 
   mongo:
     image: mongo:8
@@ -55,7 +48,8 @@ services:
     volumes:
       - mongo-data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      test:
+        ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -105,7 +99,7 @@ services:
     # Pinned to this image's version of the file; drop it once fixed upstream.
     volumes:
       - hf-cache:/root/.cache/huggingface
-      - ./deploy/vllm-patches/triton_prefill_attention.py:/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/ops/triton_prefill_attention.py:ro
+      - ./deploy/k8s/embed/triton_prefill_attention.py:/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/ops/triton_prefill_attention.py:ro
     depends_on:
       vllm-chat:
         condition: service_healthy
@@ -120,9 +114,7 @@ services:
       # Text only: skip the image, video and audio encoders' profiling.
       - --limit-mm-per-prompt={"image":0,"video":0,"audio":0}
 
-
 volumes:
-  redis-data:
   mongo-data:
   postgres-data:
   hf-cache:
