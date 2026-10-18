@@ -1,5 +1,15 @@
 import { MongoClient, type Collection } from "mongodb";
-import type { AdvisorSummary, AnalysisReviewInput, AnalysisStats, Aspect, EntityKind, ReviewExtraction, Sentiment, SyncStatus, TrackRole } from "@perforvisor/core";
+import type {
+  AdvisorSummary,
+  AnalysisReviewInput,
+  AnalysisStats,
+  Aspect,
+  EntityKind,
+  ReviewExtraction,
+  Sentiment,
+  SyncStatus,
+  TrackRole,
+} from "@perforvisor/core";
 import type { Config } from "../config.ts";
 
 export interface EntityDoc {
@@ -37,6 +47,8 @@ export interface AnalysisDoc extends ReviewExtraction {
   ratingMismatch: boolean;
   model: string;
   analysedAt: Date;
+  /** Set once the analysis's claims are in the knowledge graph. */
+  graphedAt?: Date;
 }
 
 export interface ReportDoc {
@@ -73,6 +85,19 @@ export interface EdgeDoc {
   weight: number;
 }
 
+/** Cached SerpApi response; expired documents are deleted by a TTL index on expiresAt. */
+export interface SerpApiCacheDoc {
+  _id: string; // hash of the request without the API key
+  body: string;
+  expiresAt: Date;
+}
+
+/** SerpApi searches used per month (the guard's budget counter). */
+export interface SerpApiUsageDoc {
+  _id: string; // "YYYY-MM"
+  used: number;
+}
+
 export interface Mongo {
   client: MongoClient;
   entities: Collection<EntityDoc>;
@@ -81,13 +106,15 @@ export interface Mongo {
   reports: Collection<ReportDoc>;
   nodes: Collection<NodeDoc>;
   edges: Collection<EdgeDoc>;
+  serpapiCache: Collection<SerpApiCacheDoc>;
+  serpapiUsage: Collection<SerpApiUsageDoc>;
 }
 
 export async function connectMongo(config: Config): Promise<Mongo> {
   // ignoreUndefined: optional fields left undefined are omitted instead of stored as null.
   const client = new MongoClient(config.MONGO_URL, { ignoreUndefined: true });
   await client.connect();
-  const db = client.db();
+  const db = client.db(config.MONGO_DB);
   const mongo: Mongo = {
     client,
     entities: db.collection("entities"),
@@ -96,14 +123,21 @@ export async function connectMongo(config: Config): Promise<Mongo> {
     reports: db.collection("reports"),
     nodes: db.collection("nodes"),
     edges: db.collection("edges"),
+    serpapiCache: db.collection("serpapi_cache"),
+    serpapiUsage: db.collection("serpapi_usage"),
   };
   await Promise.all([
     mongo.reviews.createIndex({ entityKey: 1, createdAt: -1 }),
     mongo.analyses.createIndex({ entityKey: 1 }),
-    mongo.entities.createIndex({ "tracking.role": 1, "tracking.competitorOf": 1 }),
+    mongo.entities.createIndex({
+      "tracking.role": 1,
+      "tracking.competitorOf": 1,
+    }),
     mongo.nodes.createIndex({ entityKey: 1, type: 1 }),
     mongo.edges.createIndex({ from: 1, type: 1 }),
     mongo.edges.createIndex({ to: 1, type: 1 }),
+    mongo.serpapiCache.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    mongo.analyses.createIndex({ entityKey: 1, graphedAt: 1 }),
   ]);
   return mongo;
 }

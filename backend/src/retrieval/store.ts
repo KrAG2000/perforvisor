@@ -4,7 +4,8 @@ import type { EntityDoc, Mongo } from "../db/mongo.ts";
 import type { Postgres } from "../db/postgres.ts";
 import { embedDocuments, embedQuery } from "../ai/embed.ts";
 
-export const reviewKey = (entityKey: string, reviewId: string) => `${entityKey}#${reviewId}`;
+export const reviewKey = (entityKey: string, reviewId: string) =>
+  `${entityKey}#${reviewId}`;
 
 export interface IndexResult {
   stored: number;
@@ -23,7 +24,11 @@ export async function indexReviews(
   signal?: AbortSignal,
 ): Promise<IndexResult> {
   const { mongo, pg } = stores;
-  await mongo.entities.updateOne({ _id: entity._id }, { $set: { ...entity, lastSyncedAt: new Date() } }, { upsert: true });
+  await mongo.entities.updateOne(
+    { _id: entity._id },
+    { $set: { ...entity, lastSyncedAt: new Date() } },
+    { upsert: true },
+  );
 
   // Rating-only reviews (no text) count for statistics but have nothing to search or embed.
   const searchable = reviews.filter((r) => r.text.trim().length > 0);
@@ -33,7 +38,14 @@ export async function indexReviews(
       reviews.map((r) => ({
         updateOne: {
           filter: { _id: reviewKey(entity._id, r.id) },
-          update: { $set: { ...r, entityKey: entity._id, source: entity.source, storedAt: new Date() } },
+          update: {
+            $set: {
+              ...r,
+              entityKey: entity._id,
+              source: entity.source,
+              storedAt: new Date(),
+            },
+          },
           upsert: true,
         },
       })),
@@ -57,12 +69,20 @@ export async function indexReviews(
     );
   }
 
-  const { rows: pending } = await pg.query<{ review_key: string; text: string }>(
+  const { rows: pending } = await pg.query<{
+    review_key: string;
+    text: string;
+  }>(
     `SELECT review_key, text FROM review_search WHERE entity_key = $1 AND embedding IS NULL`,
     [entity._id],
   );
   if (pending.length) {
-    const vectors = await embedDocuments(config, entity.name, pending.map((p) => p.text), signal);
+    const vectors = await embedDocuments(
+      config,
+      entity.name,
+      pending.map((p) => p.text),
+      signal,
+    );
     await pg.query(
       `UPDATE review_search AS r SET embedding = v.embedding::vector
        FROM unnest($1::text[], $2::text[]) AS v(review_key, embedding)
@@ -83,9 +103,22 @@ export interface Match {
 }
 
 /** The reviews of one entity most similar to the question, by cosine similarity. */
-export async function vectorSearch(config: Config, pg: Postgres, entityKey: string, question: string, limit: number, signal?: AbortSignal): Promise<Match[]> {
+export async function vectorSearch(
+  config: Config,
+  pg: Postgres,
+  entityKey: string,
+  question: string,
+  limit: number,
+  signal?: AbortSignal,
+): Promise<Match[]> {
   const queryVector = await embedQuery(config, question, signal);
-  const { rows } = await pg.query<{ review_key: string; text: string; rating: number | null; created_at: Date | null; similarity: number }>(
+  const { rows } = await pg.query<{
+    review_key: string;
+    text: string;
+    rating: number | null;
+    created_at: Date | null;
+    similarity: number;
+  }>(
     `SELECT review_key, text, rating, created_at, 1 - (embedding <=> $2::vector) AS similarity
      FROM review_search
      WHERE entity_key = $1 AND embedding IS NOT NULL
@@ -102,7 +135,13 @@ export async function vectorSearch(config: Config, pg: Postgres, entityKey: stri
   }));
 }
 
-export async function countReviews(pg: Postgres, entityKey: string): Promise<number> {
-  const { rows } = await pg.query<{ n: string }>(`SELECT count(*) AS n FROM review_search WHERE entity_key = $1`, [entityKey]);
+export async function countReviews(
+  pg: Postgres,
+  entityKey: string,
+): Promise<number> {
+  const { rows } = await pg.query<{ n: string }>(
+    `SELECT count(*) AS n FROM review_search WHERE entity_key = $1`,
+    [entityKey],
+  );
   return Number(rows[0]?.n ?? 0);
 }

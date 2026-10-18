@@ -46,7 +46,18 @@ const migrations = (dimensions: number) => [
 ];
 
 export async function connectPostgres(config: Config) {
-  const pool = new pg.Pool({ connectionString: config.DATABASE_URL, max: 10 });
+  const schema = config.PG_SCHEMA;
+  // A dedicated schema keeps Perforvisor's tables apart from anything else in a shared
+  // database; extensions and TimescaleDB functions are still found through public.
+  const pool = new pg.Pool({
+    connectionString: config.DATABASE_URL,
+    max: config.PG_POOL_MAX,
+    options: `-c search_path=${schema},public`,
+  });
+  // Only create the schema when it's missing: CREATE SCHEMA IF NOT EXISTS still needs the
+  // database-level CREATE privilege, which a least-privilege app role doesn't have.
+  const { rowCount } = await pool.query(`SELECT 1 FROM pg_namespace WHERE nspname = $1`, [schema]);
+  if (!rowCount) await pool.query(`CREATE SCHEMA ${schema}`);
   for (const sql of migrations(config.EMBED_DIMENSIONS)) await pool.query(sql);
   return pool;
 }
