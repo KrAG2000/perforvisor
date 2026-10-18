@@ -52,6 +52,7 @@ export async function connectPostgres(config: Config) {
   const pool = new pg.Pool({
     connectionString: config.DATABASE_URL,
     max: config.PG_POOL_MAX,
+    connectionTimeoutMillis: 10_000,
     options: `-c search_path=${schema},public`,
   });
   // Only create the schema when it's missing: CREATE SCHEMA IF NOT EXISTS still needs the

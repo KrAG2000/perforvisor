@@ -112,7 +112,7 @@ export interface Mongo {
 
 export async function connectMongo(config: Config): Promise<Mongo> {
   // ignoreUndefined: optional fields left undefined are omitted instead of stored as null.
-  const client = new MongoClient(config.MONGO_URL, { ignoreUndefined: true });
+  const client = new MongoClient(config.MONGO_URL, { ignoreUndefined: true, serverSelectionTimeoutMS: 10_000 });
   await client.connect();
   const db = client.db(config.MONGO_DB);
   const mongo: Mongo = {
