@@ -1,0 +1,14 @@
+# The servers are reachable from the internet, so every /v1 call needs the key
+# (Secret vllm-api-key, created in deploy/gke/README.md). /health stays open for the
+# load balancer's health checks.
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: VLLM_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: vllm-api-key
+        key: key
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: --api-key=$(VLLM_API_KEY)

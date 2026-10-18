@@ -1,18 +1,20 @@
-# Schedules vLLM onto the L4 node pool created in deploy/gke/README.md.
+# Runs on the L4 Spot pool from deploy/gke/README.md, sharing its one GPU between both
+# model servers. GKE requires time-shared pods to select the sharing strategy and limit.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vllm
+  name: placeholder
 spec:
   template:
     spec:
       nodeSelector:
         cloud.google.com/gke-accelerator: nvidia-l4
+        cloud.google.com/gke-gpu-sharing-strategy: time-sharing
+        cloud.google.com/gke-max-shared-clients-per-gpu: "2"
       tolerations:
         - key: nvidia.com/gpu
           operator: Exists
           effect: NoSchedule
-        # The node pool uses Spot VMs.
         - key: cloud.google.com/gke-spot
           operator: Equal
           value: "true"

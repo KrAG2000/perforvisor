@@ -1,0 +1,49 @@
+# HTTPS entry point: a global static IP, a Google-managed certificate for two sslip.io
+# hostnames that resolve to that IP (no DNS setup needed), and host-based routing.
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: vllm
+spec:
+  domains:
+    - chat-host-placeholder
+    - embed-host-placeholder
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: vllm-backend
+spec:
+  # Long generations and batch embeddings outlast the default 30 s.
+  timeoutSec: 300
+  healthCheck:
+    type: HTTP
+    requestPath: /health
+    port: 8000
+    checkIntervalSec: 15
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vllm
+  annotations:
+    kubernetes.io/ingress.class: gce
+    kubernetes.io/ingress.global-static-ip-name: perforvisor-llm-ip
+    networking.gke.io/managed-certificates: vllm
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  rules:
+    - host: chat-host-placeholder
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: vllm, port: { number: 8000 } }
+    - host: embed-host-placeholder
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: vllm-embed, port: { number: 8000 } }

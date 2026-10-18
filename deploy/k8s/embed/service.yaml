@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-embed
+  labels:
+    app.kubernetes.io/name: vllm-embed
+spec:
+  selector:
+    app.kubernetes.io/name: vllm-embed
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

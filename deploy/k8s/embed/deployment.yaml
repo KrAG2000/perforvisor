@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-embed
+  labels:
+    app.kubernetes.io/name: vllm-embed
+    app.kubernetes.io/component: model-server
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vllm-embed
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vllm-embed
+        app.kubernetes.io/component: model-server
+    spec:
+      # Kubernetes would inject VLLM_PORT=tcp://… for the "vllm" Service, which vLLM reads
+      # as its own setting and crashes on.
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:nightly-77154ca6116ae34cbfe314beef1016bde9b63989
+          args:
+            - --model=$(EMBED_MODEL)
+            - --port=8000
+            - --runner=pooling
+            - --max-model-len=2048
+            - --max-num-seqs=32
+            - --max-num-batched-tokens=4096
+            - --gpu-memory-utilization=$(VLLM_GPU_MEMORY_UTILIZATION)
+            # Text only: skip the image, video and audio encoders' profiling.
+            - '--limit-mm-per-prompt={"image":0,"video":0,"audio":0}'
+          envFrom:
+            - configMapRef:
+                name: vllm-embed-config
+          env:
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hf-token
+                  key: token
+                  optional: true
+          ports:
+            - name: http
+              containerPort: 8000
+          resources:
+            requests:
+              cpu: "1"
+              memory: 3Gi
+            limits:
+              memory: 6Gi
+              nvidia.com/gpu: "1"
+          startupProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            failureThreshold: 120
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 20
+            failureThreshold: 3
+          volumeMounts:
+            - name: hf-cache
+              mountPath: /root/.cache/huggingface
+            - name: dshm
+              mountPath: /dev/shm
+            - name: triton-patch
+              mountPath: /usr/local/lib/python3.12/dist-packages/vllm/v1/attention/ops/triton_prefill_attention.py
+              subPath: triton_prefill_attention.py
+              readOnly: true
+      volumes:
+        - name: hf-cache
+          persistentVolumeClaim:
+            claimName: vllm-embed-hf-cache
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
+        - name: triton-patch
+          configMap:
+            name: vllm-triton-patch

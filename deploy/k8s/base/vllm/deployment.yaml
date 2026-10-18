@@ -19,6 +19,9 @@ spec:
         app.kubernetes.io/name: vllm
         app.kubernetes.io/component: model-server
     spec:
+      # Kubernetes would inject VLLM_PORT=tcp://… for the "vllm" Service, which vLLM reads
+      # as its own setting and crashes on.
+      enableServiceLinks: false
       terminationGracePeriodSeconds: 60
       containers:
         - name: vllm

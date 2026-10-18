@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# EmbeddingGemma 2 on vLLM. GPU only (it needs the pinned nightly and the kernel patch below).
+resources:
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+configMapGenerator:
+  - name: vllm-embed-config
+    literals:
+      - EMBED_MODEL=google/embeddinggemma-2
+      - VLLM_GPU_MEMORY_UTILIZATION=0.15
+  # vLLM sizes this model's Triton prefill tiles for A100/H100 shared memory (~160 KB per
+  # block); L4 and RTX 40-series (Ada) have ~99 KB. The patched file caps the tile size on
+  # such GPUs. Also mounted by docker-compose.yml; drop it once fixed upstream.
+  - name: vllm-triton-patch
+    files:
+      - triton_prefill_attention.py

@@ -4,12 +4,14 @@ kind: Component
 images:
   - name: vllm-server
     newName: vllm/vllm-openai
-    newTag: v0.31.0
+    # Pinned nightly, same as docker-compose.yml: EmbeddingGemma 2 support landed after 0.31.0.
+    newTag: nightly-77154ca6116ae34cbfe314beef1016bde9b63989
 configMapGenerator:
   - name: vllm-config
     behavior: merge
     literals:
-      - VLLM_GPU_MEMORY_UTILIZATION=0.90
+      # 60% of the L4: the embedding server time-shares the same GPU (15%).
+      - VLLM_GPU_MEMORY_UTILIZATION=0.60
 patches:
   - target:
       kind: Deployment
